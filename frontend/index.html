@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Техническая поддержка сервиса Домовой инспектор на базе гибридного RAG-поиска.">
+  <title>Домовой инспектор AI · RAG PRO</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">Д</span><div><strong>Домовой инспектор</strong><small>AI · RAG PRO</small></div></div>
+      <div class="side-copy"><span class="eyebrow">ТЕХПОДДЕРЖКА</span><h1>Ответы,<br><em>подтверждённые</em><br>документацией.</h1><p>Поиск по базе знаний сервиса с прозрачной диагностикой каждого ответа.</p></div>
+      <div class="status-card"><span class="status-dot" id="status-dot"></span><div><strong id="status-title">Проверяем базу…</strong><small id="status-detail">Индекс доступности</small></div></div>
+      <div class="side-foot"><div class="mini-stat"><b>10</b><span>документов</span></div><div class="mini-stat"><b>RRF</b><span>гибридный поиск</span></div><p>Ответы формируются только по найденным фрагментам. Если подтверждения нет — мы так и скажем.</p></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><span class="eyebrow">ОПЕРАТОР ТЕХПОДДЕРЖКИ</span><h2>Чат с базой знаний</h2></div><div class="top-actions"><span class="secure"><i></i> API-ключ хранится на сервере</span><button class="icon-btn" id="clear-chat" title="Очистить чат" aria-label="Очистить чат">↻</button></div></header>
+      <section class="chat" aria-label="Чат поддержки">
+        <div class="welcome"><div class="welcome-icon">✦</div><div><strong>Здравствуйте! Я оператор «Домового инспектора».</strong><p>Задайте вопрос о функциях, создании обращений, фото, ошибках или ограничениях сервиса.</p></div></div>
+        <div id="messages" class="messages" role="log" aria-live="polite"></div>
+        <div id="typing" class="typing" hidden><span class="typing-dots"><i></i><i></i><i></i></span>Ищу в базе и формирую ответ…</div>
+      </section>
+      <section class="composer-section">
+        <div class="suggestions"><span>Попробуйте спросить</span><button data-question="Как создать новое обращение?">Создать обращение</button><button data-question="Что делать, если не загружается фото по ссылке?">Ошибка загрузки фото</button><button data-question="Сохраняется ли история обращений?">История обращений</button><button data-question="Есть ли автоматическая отправка обращения в УК?">Ограничения</button></div>
+        <p id="error" class="error" role="alert" hidden></p>
+        <form id="chat-form"><label class="sr-only" for="message-input">Вопрос оператору</label><div class="input-row"><textarea id="message-input" rows="1" maxlength="2000" placeholder="Напишите вопрос по сервису…" required></textarea><button id="send-button" type="submit" disabled>Спросить <span>↗</span></button></div><div class="input-meta"><span>Enter — отправить · Shift + Enter — новая строка</span><span id="char-count">0 / 2000</span></div></form>
+      </section>
+      <footer class="footer"><span>База знаний «Домовой инспектор AI» · версия 1.0</span><span>Источники показываются рядом с каждым ответом</span></footer>
+    </main>
+  </div>
+</body>
+</html>

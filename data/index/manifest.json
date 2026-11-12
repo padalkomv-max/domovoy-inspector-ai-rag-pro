@@ -1,0 +1,20 @@
+{
+  "created_at": "2026-11-09T20:59:32.720089+00:00",
+  "documents": 10,
+  "chunks": 40,
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "vector_index": "FAISS IndexFlatIP with normalized embeddings",
+  "keyword_index": "rank_bm25 BM25Okapi",
+  "sources": [
+    "01_назначение_и_разделы.md",
+    "02_создание_обращения.md",
+    "03_фото_и_камера.md",
+    "04_описание_и_голос.md",
+    "05_место_проблемы.md",
+    "06_адресат_и_цель.md",
+    "07_результаты_анализа.md",
+    "08_история_обращений.md",
+    "09_ошибки_и_диагностика.md",
+    "10_архитектура_и_ограничения.md"
+  ]
+}

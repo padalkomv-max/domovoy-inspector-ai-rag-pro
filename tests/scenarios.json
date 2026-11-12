@@ -1,0 +1,12 @@
+[
+  {"question": "Как создать новое обращение?", "expected_source": "02_создание_обращения.md", "kind": "direct"},
+  {"question": "Можно ли начать анализ только с текста, без фотографии?", "expected_source": "04_описание_и_голос.md", "kind": "paraphrase"},
+  {"question": "Какие категории мест обнаружения доступны?", "expected_source": "05_место_проблемы.md", "kind": "direct"},
+  {"question": "Кому можно адресовать обращение и какие есть цели?", "expected_source": "06_адресат_и_цель.md", "kind": "direct"},
+  {"question": "Почему ссылка на фото может дать ошибку 400?", "expected_source": "09_ошибки_и_диагностика.md", "kind": "error"},
+  {"question": "Нужно ли разрешение браузера для снимка с камеры?", "expected_source": "03_фото_и_камера.md", "kind": "condition"},
+  {"question": "Что сохраняется в истории и где она хранится?", "expected_source": "08_история_обращений.md", "kind": "exception"},
+  {"question": "Какие разделы показывает приложение?", "expected_source": "01_назначение_и_разделы.md", "kind": "direct"},
+  {"question": "Есть ли автоматическая отправка обращения в управляющую компанию?", "expected_source": "10_архитектура_и_ограничения.md", "kind": "absence"},
+  {"question": "Какая стоимость платной подписки на сервис?", "expected_source": null, "kind": "out_of_scope"}
+]
