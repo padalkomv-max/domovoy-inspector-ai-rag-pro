@@ -9,7 +9,10 @@ from fastapi.testclient import TestClient
 from backend.main import app
 
 
-pytestmark = pytest.mark.skipif(not os.getenv("RUN_LIVE_LLM") or not os.getenv("LLM_API_KEY"), reason="Нужен явный RUN_LIVE_LLM=1 и LLM_API_KEY")
+pytestmark = pytest.mark.skipif(
+    not os.getenv("RUN_LIVE_LLM") or not (os.getenv("GEMINI_API_KEY") or os.getenv("LLM_API_KEY")),
+    reason="Нужен явный RUN_LIVE_LLM=1 и API-ключ выбранного LLM-провайдера",
+)
 
 
 @pytest.mark.parametrize("question", [

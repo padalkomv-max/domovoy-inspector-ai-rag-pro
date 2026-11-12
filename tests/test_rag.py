@@ -54,6 +54,13 @@ def test_real_hybrid_index_runs_both_searchers_and_rrf():
     assert any(source["source"] == "09_ошибки_и_диагностика.md" for source in result.sources)
 
 
+def test_onnx_manifest_dimension_matches_faiss():
+    manifest = json.loads((ROOT / "data" / "index" / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["embedding_backend"] == "onnxruntime"
+    assert manifest["embedding_dimension"] == 1024
+    assert manifest["embedding_max_length"] == 512
+
+
 def test_procedural_query_expands_the_leading_document_sections():
     index_dir = ROOT / "data" / "index"
     if not (index_dir / "manifest.json").exists():

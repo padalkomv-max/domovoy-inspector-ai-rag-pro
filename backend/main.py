@@ -52,7 +52,11 @@ def get_retriever() -> HybridRetriever:
     if _retriever is not None:
         return _retriever
     try:
-        _retriever = HybridRetriever.load(settings.index_dir)
+        _retriever = HybridRetriever.load(
+            settings.index_dir,
+            settings.embedding_cache_dir,
+            settings.embedding_max_length,
+        )
         return _retriever
     except IndexNotReadyError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from None
@@ -81,7 +85,14 @@ async def reindex(x_reindex_token: str | None = Header(default=None)) -> Reindex
     global _retriever
     if not settings.reindex_token or x_reindex_token != settings.reindex_token:
         raise HTTPException(status_code=403, detail="Недостаточно прав для переиндексации")
-    result = build_index(settings.source_dir, settings.index_dir, settings.embedding_model)
+    result = build_index(
+        settings.source_dir,
+        settings.index_dir,
+        settings.embedding_model,
+        settings.embedding_revision,
+        settings.embedding_cache_dir,
+        settings.embedding_max_length,
+    )
     _retriever = None
     return ReindexResponse(**result)
 

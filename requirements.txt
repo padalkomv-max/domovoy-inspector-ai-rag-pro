@@ -3,7 +3,9 @@ uvicorn==0.54.0
 httpx==0.28.1
 python-dotenv==1.2.3
 pytest==9.1.1
-numpy==2.4.2
+numpy==2.3.5
 faiss-cpu==1.13.2
 rank-bm25==0.2.2
-sentence-transformers==5.2.2
+onnxruntime==1.28.0
+pydantic==2.9.2
+pydantic-core==2.23.4

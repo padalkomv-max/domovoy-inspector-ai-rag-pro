@@ -40,3 +40,16 @@ def test_chat_does_not_call_llm_when_index_is_missing(monkeypatch):
     monkeypatch.setattr(main, "get_retriever", missing)
     response = TestClient(main.app).post("/api/chat", json={"message": "Вопрос"})
     assert response.status_code == 503
+
+
+def test_chat_returns_json_for_llm_error(monkeypatch):
+    monkeypatch.setattr(main, "get_retriever", lambda: FakeRetriever())
+
+    async def failing_answer(question, history, chunks):
+        raise main.LLMError("timeout", "LLM не успел ответить. Повторите запрос.", 504)
+
+    monkeypatch.setattr(main, "generate_answer", failing_answer)
+    response = TestClient(main.app).post("/api/chat", json={"message": "Вопрос"})
+    assert response.status_code == 504
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["detail"] == "LLM не успел ответить. Повторите запрос."

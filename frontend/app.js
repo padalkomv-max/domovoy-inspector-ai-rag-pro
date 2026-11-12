@@ -6,6 +6,22 @@ const typing = document.querySelector('#typing');
 const errorBox = document.querySelector('#error');
 const charCount = document.querySelector('#char-count');
 const history = [];
+const REQUEST_TIMEOUT_MS = 75000;
+
+async function readApiResponse(response) {
+  const raw = await response.text();
+  if (!raw.trim()) {
+    return {detail: `Сервер вернул пустой ответ (HTTP ${response.status}). Повторите запрос позднее.`};
+  }
+  try {
+    const data = JSON.parse(raw);
+    return data && typeof data === 'object'
+      ? data
+      : {detail: `Сервер вернул некорректный JSON (HTTP ${response.status}).`};
+  } catch {
+    return {detail: `Сервер вернул некорректный JSON (HTTP ${response.status}).`};
+  }
+}
 
 function escapeHtml(value) {
   return value.replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
@@ -40,9 +56,10 @@ function setStatus(ready, detail) {
 async function checkStatus() {
   try {
     const response = await fetch('/api/knowledge/status');
-    const data = await response.json();
+    const data = await readApiResponse(response);
+    if (!response.ok) throw new Error(data.detail || `Сервер вернул HTTP ${response.status}.`);
     setStatus(data.ready, data.ready ? `${data.documents} документов · ${data.chunks} чанков` : 'Запустите переиндексацию');
-  } catch { setStatus(false, 'Сервер недоступен'); }
+  } catch (error) { setStatus(false, error.message || 'Сервер недоступен'); }
 }
 
 function updateInput() {
@@ -61,17 +78,24 @@ async function ask(question) {
   errorBox.hidden = true;
   typing.hidden = false;
   sendButton.disabled = true;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: question, history})});
-    const data = await response.json();
+    const response = await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: question, history}), signal: controller.signal});
+    const data = await readApiResponse(response);
     if (!response.ok) throw new Error(data.detail || 'Не удалось получить ответ.');
+    if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('Сервер вернул неполный ответ без текста оператора.');
     history.push({role: 'user', content: question}, {role: 'assistant', content: data.reply});
     while (history.length > 12) history.shift();
     addMessage('assistant', data.reply, data.sources, data.diagnostics);
   } catch (error) {
-    errorBox.textContent = error.message;
+    errorBox.textContent = error.name === 'AbortError'
+      ? 'Сервер не ответил вовремя. Возможно, Render загружает модель или перезапускает сервис. Повторите запрос через несколько секунд.'
+      : error instanceof TypeError
+        ? 'Не удалось связаться с сервером. Проверьте доступность Render и повторите запрос.'
+      : error.message || 'Не удалось связаться с сервером.';
     errorBox.hidden = false;
-  } finally { typing.hidden = true; updateInput(); input.focus(); }
+  } finally { clearTimeout(timeoutId); typing.hidden = true; updateInput(); input.focus(); }
 }
 
 form.addEventListener('submit', event => { event.preventDefault(); ask(input.value); });

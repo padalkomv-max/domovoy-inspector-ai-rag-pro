@@ -12,5 +12,12 @@ from backend.rag import build_index
 
 
 if __name__ == "__main__":
-    result = build_index(settings.source_dir, settings.index_dir, settings.embedding_model)
+    result = build_index(
+        settings.source_dir,
+        settings.index_dir,
+        settings.embedding_model,
+        settings.embedding_revision,
+        settings.embedding_cache_dir,
+        settings.embedding_max_length,
+    )
     print(f"Индексация завершена: {result['documents']} документов, {result['chunks']} чанков, модель {result['model']}")

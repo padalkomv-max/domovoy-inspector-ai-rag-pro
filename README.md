@@ -6,7 +6,7 @@
 
 - 10 реальных Markdown-документов из архива Google Drive; `README_индекс.md` не индексируется.
 - Чанкинг по разделам `##` с сохранением `source`, `section` и `version`.
-- Реальные embeddings через `sentence-transformers` и векторный индекс FAISS.
+- Реальные CPU embeddings через ONNX Runtime без PyTorch и `sentence-transformers`; выбранная multilingual-модель поддерживает русский язык.
 - Настоящий BM25 через `rank-bm25` по тексту, разделу и имени источника.
 - RRF объединяет оба ранжирования, удаляет дубли и передаёт LLM только top-K найденных фрагментов.
 - Источники отображаются рядом с ответом; «Диагностика поиска» раскрывает vector search, BM25 и итоговый контекст LLM.
@@ -53,12 +53,25 @@ GEMINI_MODEL=gemini-3-flash-preview
 
 Для прежней OpenAI-конфигурации оставьте `LLM_PROVIDER=openai` и используйте `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`.
 
-Сначала создайте индекс. При первом запуске `sentence-transformers` скачает модель embeddings:
+Сначала создайте индекс. При первом запуске приложение скачает зафиксированную ONNX-модель embeddings в локальный кэш по HTTPS:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\reindex.py
 .\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
+
+Текущий embedding-runtime — `onnxruntime` с CPUExecutionProvider, модель `sentence-transformers/static-similarity-mrl-multilingual-v1`, revision зафиксирован в `.env.example`. Индекс имеет 1024 измерения и нормализованные векторы для FAISS Inner Product. Для Render задайте те же `EMBEDDING_MODEL` и `EMBEDDING_MODEL_REVISION`; при необходимости укажите `EMBEDDING_CACHE_DIR`. PyTorch, CUDA и `sentence-transformers` в рабочем окружении не нужны.
+
+Для Render используйте build-команду `python scripts/reindex.py` после установки зависимостей, если индекс не был подготовлен заранее. Это скачивает модель и пересоздаёт только производные файлы `data/index/`; исходные документы в `data/raw/` не меняются.
+
+Для Render зафиксирован Python `3.11.11` в `.python-version`. Рекомендуемые команды сервиса:
+
+```text
+Build:  pip install -r requirements.txt && python scripts/reindex.py
+Start:  uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+```
+
+Render Free использует ephemeral filesystem, поэтому кэш ONNX и производный индекс нужно создавать на каждом build или хранить в репозитории как производные файлы индекса. Секрет Gemini задаётся только в Environment Variables Render и не попадает в Git.
 
 Откройте http://127.0.0.1:8000. Проверка сервера: http://127.0.0.1:8000/health.
 
