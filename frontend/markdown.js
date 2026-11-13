@@ -23,7 +23,7 @@ function buildMarkdownExport(reply, sources = [], diagnostics = null) {
   const refusedForMissingInformation = isUnsupportedAnswer(reply);
   const confirmedSources = refusedForMissingInformation ? [] : candidateSources;
   const lines = [
-    '# Ответ AI-оператора',
+    '# Ответ AI-оператор',
     '',
     '## Ответ',
     '',

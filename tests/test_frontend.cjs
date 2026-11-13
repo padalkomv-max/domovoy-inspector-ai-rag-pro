@@ -45,6 +45,7 @@ test('markdown export contains answer, source versions and diagnostics', () => {
       rrf_k: 60,
     },
   );
+  assert.match(markdown, /^# Ответ AI-оператора$/m);
   assert.match(markdown, /Ответ по документации/);
   assert.match(markdown, /02_создание_обращения\.md/);
   assert.match(markdown, /Версия/);
