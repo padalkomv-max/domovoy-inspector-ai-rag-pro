@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUN_LIVE_LLM: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+
+      - name: Run backend and RAG tests without live LLM calls
+        run: python -m pytest -q
+
+      - name: Run frontend and Markdown export tests
+        run: node --test tests/test_frontend.cjs
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check frontend/app.js
+          node --check frontend/markdown.js
+
+      - name: Check Python syntax
+        run: python -m compileall -q backend scripts tests
+
+      - name: Smoke-test FastAPI startup and static frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 > uvicorn-ci.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/health > health.json; then
+              break
+            fi
+            sleep 1
+          done
+          test -s health.json
+          grep -q '"status":"ok"' health.json
+          curl --fail --silent http://127.0.0.1:8000/ > index.html
+          grep -q '/static/markdown.js' index.html
+          curl --fail --silent http://127.0.0.1:8000/static/markdown.js > markdown.js
+          grep -q 'buildMarkdownExport' markdown.js
+          curl --fail --silent http://127.0.0.1:8000/api/knowledge/status > knowledge.json
+          grep -q '"ready":true' knowledge.json
+
+      - name: Check tracked files for accidental secrets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
+          tracked = [Path(item) for item in tracked if item]
+          forbidden_names = {".env", ".env.local", ".env.production", ".env.backup"}
+          forbidden_files = [path.as_posix() for path in tracked if path.name in forbidden_names]
+          patterns = [
+              re.compile(r"AIza[0-9A-Za-z_-]{20,}"),
+              re.compile(r"(?:^|[^A-Za-z0-9])sk-[A-Za-z0-9]{20,}"),
+              re.compile(r"(?im)^[ \t]*(?:GEMINI_API_KEY|LLM_API_KEY)[ \t]*=[ \t]*(?!$|#|['\"]?$|your_|ваш_|<|CHANGE_ME)[^\s#]+"),
+              re.compile(r"(?i)-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+          ]
+          findings = []
+          for path in tracked:
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              if path.name in forbidden_names:
+                  continue
+              if any(pattern.search(text) for pattern in patterns):
+                  findings.append(path.as_posix())
+          findings.extend(forbidden_files)
+          if findings:
+              print("Potential secrets found in tracked files:")
+              for filename in sorted(set(findings)):
+                  print(filename)
+              sys.exit(1)
+          print(f"Secret scan passed for {len(tracked)} tracked files; values were not printed.")
+          PY
