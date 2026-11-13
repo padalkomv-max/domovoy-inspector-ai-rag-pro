@@ -42,7 +42,18 @@ function addMessage(role, text, sources = [], diagnostics = null) {
   if (role === 'assistant' && diagnostics) {
     html += `<details class="diagnostics"><summary>Диагностика поиска</summary><div class="diag-grid"><div><b>Векторный поиск</b><span>${diagnostics.vector_results.length} результатов</span></div><div><b>BM25</b><span>${diagnostics.bm25_results.length} результатов</span></div><div><b>RRF</b><span>top-${diagnostics.final_chunks.length}, k=${diagnostics.rrf_k}</span></div></div><div class="diag-list"><h4>Векторный поиск</h4>${diagnostics.vector_results.map(row => `<p><code>${row.score}</code> ${escapeHtml(row.source)} · ${escapeHtml(row.section)}</p>`).join('')}<h4>BM25</h4>${diagnostics.bm25_results.map(row => `<p><code>${row.score}</code> ${escapeHtml(row.source)} · ${escapeHtml(row.section)}</p>`).join('')}<h4>Передано LLM</h4>${diagnostics.final_chunks.map((row, i) => `<p><code>${i + 1}</code> ${escapeHtml(row.source)} · ${escapeHtml(row.section)}</p>`).join('')}</div></details>`;
   }
+  if (role === 'assistant') {
+    html += '<div class="message-actions"><button class="export-button" type="button" data-export-markdown>Скачать Markdown</button></div>';
+  }
   item.innerHTML = html;
+  const exportButton = item.querySelector('[data-export-markdown]');
+  if (exportButton) {
+    exportButton.addEventListener('click', () => {
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const markdown = buildMarkdownExport(text, sources, diagnostics);
+      downloadMarkdown(`domovoy-inspector-answer-${stamp}.md`, markdown);
+    });
+  }
   messages.appendChild(item);
   item.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 }
